@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>月球人基地</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family: 'Segoe UI', system-ui, sans-serif;}
+body{background:#070612;color:#e8eaf6;overflow-x:hidden;}
+#starfield{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-3;}
+.nebula{position:fixed;inset:0;background:radial-gradient(ellipse at 15% 20%, rgba(90,40,160,0.12), transparent 42%),radial-gradient(ellipse at 85% 80%, rgba(20,110,140,0.09), transparent 40%);z-index:-2;}
+nav{position:fixed;width:100%;top:0;z-index:999;padding:1.2rem 0;transition:0.4s ease;}
+nav.scrolled{background:rgba(10,9,22,0.65);backdrop-filter: blur(12px);border-bottom:1px solid rgba(157,123,255,0.12);}
+.nav-wrap{max-width:1400px;margin:0 auto;padding:0 2.4rem;display:flex;justify-content:space-between;align-items:center;}
+.logo{font-size:1.4rem;font-weight:300;letter-spacing:4px;background:linear-gradient(90deg,#9d7bff,#57e3ff);-webkit-background-clip:text;color:transparent;}
+.nav-links{display:flex;gap:2.6rem;list-style:none;}
+.nav-links .nav-item{color:#c9cde0;font-weight:300;font-size:0.95rem;transition:0.3s ease;position:relative;cursor:pointer;}
+.nav-links .nav-item.active{color:#fff;}
+.nav-links .nav-item.active::after{width:100%;}
+.nav-links .nav-item:hover{color:#fff;}
+.nav-links .nav-item::after{content:"";position:absolute;left:0;bottom:-5px;width:0;height:1px;background:#9d7bff;transition:0.3s;}
+.nav-links .nav-item:hover::after{width:100%;}
+/* 反色小眼睛按钮 */
+.eye-btn{background:transparent;border:none;padding:0;display:grid;place-items:center;cursor:pointer;color:#c9cde0;transition:0.3s ease;}
+.eye-btn:hover{color:#9d7bff;}
+.eye-btn svg{width:20px;height:20px;display:block;}
+.eye-btn .eye-off{display:none;}
+html.inverted{filter:invert(1);}
+html.inverted .eye-btn .eye-on{display:none;}
+html.inverted .eye-btn .eye-off{display:block;}
+.page{display:none;min-height:100vh;padding-top:80px;}
+.page.active{display:block;}
+/* 首页Hero */
+.hero{min-height:calc(100vh - 80px);display:grid;place-items:center;padding:0 2rem;}
+.hero-inner{max-width:1100px;}
+.hero h1{font-size:4.6rem;font-weight:200;line-height:1.1;margin-bottom:1.6rem;background:linear-gradient(90deg,#d4c7ff,#86e8ff);-webkit-background-clip:text;color:transparent;}
+.hero p{font-size:1.15rem;color:#b4b8d4;max-width:680px;line-height:1.8;font-weight:300;margin-bottom:3rem;}
+.hero-btn{padding:0.9rem 2.2rem;border-radius:999px;font-size:0.95rem;background:transparent;color:#d4c7ff;border:1px solid rgba(157,123,255,0.4);transition:0.4s ease;cursor:pointer;display:inline-block;}
+.hero-btn:hover{background:rgba(157,123,255,0.1);border-color:#9d7bff;box-shadow:0 0 24px rgba(157,123,255,0.2);}
+/* 通用容器 */
+.container{max-width:1400px;margin:0 auto;padding:40px 2.4rem;}
+.section-title{font-size:2rem;font-weight:300;color:#dde0f5;margin-bottom:3rem;display:flex;align-items:center;gap:1rem;}
+.section-title::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,#9d7bff,transparent);}
+/* About布局 */
+.content-wrap{display:grid;grid-template-columns:1.2fr 0.8fr;gap:4rem;align-items:start;}
+.text p{color:#b4b8d4;line-height:1.85;font-weight:300;margin-bottom:1.2rem;font-size:1rem;}
+.card{background:rgba(25,22,48,0.35);border-radius:18px;padding:2rem;border:1px solid rgba(157,123,255,0.14);backdrop-filter: blur(8px);transition:0.4s cubic-bezier(0.2,0,0.2,1);}
+.card:hover{transform: translateY(-6px) scale(1.01);border-color:rgba(87,227,255,0.3);box-shadow:0 18px 40px rgba(87,227,255,0.08);}
+.card h3{font-weight:400;color:#e1e4ff;margin-bottom:0.8rem;font-size:1.3rem;}
+.card p{color:#b4b8d4;line-height:1.7;font-weight:300;}
+/* 关于我们：历史流程图 */
+.flow{display:flex;flex-direction:column;align-items:center;padding:2rem 0 1rem;}
+.flow-node{position:relative;width:min(82vw,300px);height:min(82vw,300px);border-radius:50%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 42px;background:rgba(25,22,48,0.45);border:1px solid rgba(157,123,255,0.3);backdrop-filter:blur(8px);box-shadow:0 0 0 6px rgba(157,123,255,0.05),inset 0 0 30px rgba(87,227,255,0.04);transition:0.4s cubic-bezier(0.2,0,0.2,1);flex:none;}
+.flow-node:hover{transform:translateY(-5px);border-color:rgba(87,227,255,0.55);box-shadow:0 16px 42px rgba(87,227,255,0.12),0 0 0 6px rgba(157,123,255,0.07);}
+.flow-node>*{position:relative;z-index:1;}
+.flow-node::before{content:attr(data-num);position:absolute;inset:0;display:grid;place-items:center;font-size:5.2rem;font-weight:200;letter-spacing:2px;color:rgba(157,123,255,0.10);z-index:0;}
+.node-label{font-size:0.76rem;letter-spacing:2px;color:#57e3ff;margin-bottom:0.55rem;}
+.flow-node h3{font-size:1.2rem;font-weight:400;color:#e1e4ff;margin-bottom:0.6rem;}
+.flow-node p{font-size:0.82rem;line-height:1.7;color:#b4b8d4;font-weight:300;}
+.node-link{display:block;margin-top:0.55rem;font-size:0.7rem;line-height:1.5;color:#57e3ff;text-decoration:none;word-break:break-all;border-bottom:1px solid rgba(87,227,255,0.35);transition:0.3s;}
+.node-link:hover{color:#9d7bff;border-bottom-color:#9d7bff;}
+.flow-arrow{position:relative;width:2px;height:48px;background:linear-gradient(180deg,#9d7bff,#57e3ff);flex:none;}
+.flow-arrow::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);border-left:7px solid transparent;border-right:7px solid transparent;border-top:11px solid #57e3ff;filter:drop-shadow(0 0 5px rgba(87,227,255,0.5));}
+/* Project网格 */
+.project-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem;}
+/* 关联站点：链接卡片 */
+.sites-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;}
+.site-card{position:relative;display:flex;flex-direction:column;background:rgba(25,22,48,0.35);border-radius:18px;padding:2rem;border:1px solid rgba(157,123,255,0.14);backdrop-filter:blur(8px);transition:0.4s cubic-bezier(0.2,0,0.2,1);color:inherit;text-decoration:none;min-height:190px;}
+a.site-card:hover{transform:translateY(-6px) scale(1.01);border-color:rgba(87,227,255,0.3);box-shadow:0 18px 40px rgba(87,227,255,0.08);}
+.site-card h3{font-weight:400;color:#e1e4ff;margin-bottom:0.6rem;font-size:1.25rem;}
+.site-card .site-tag{font-size:0.78rem;color:#57e3ff;font-weight:300;letter-spacing:1px;margin-bottom:0.7rem;}
+.site-card p{color:#b4b8d4;line-height:1.7;font-weight:300;font-size:0.9rem;}
+.site-url{margin-top:auto;padding-top:1.3rem;display:flex;align-items:center;gap:0.45rem;font-size:0.78rem;color:#9d7bff;word-break:break-all;line-height:1.4;}
+.site-url svg{flex:none;width:14px;height:14px;}
+.site-badge{position:absolute;top:1.5rem;right:1.5rem;font-size:0.66rem;letter-spacing:1px;color:#b4b8d4;border:1px solid rgba(180,184,212,0.35);border-radius:999px;padding:0.22rem 0.7rem;}
+.site-card.is-pending{opacity:0.7;cursor:default;}
+/* Join盒子 */
+.join-box{background:rgba(25,22,48,0.35);border-radius:18px;padding:2.4rem;border:1px solid rgba(157,123,255,0.14);}
+.join-box h3{font-weight:400;color:#dde0f5;margin-bottom:1rem;font-size:1.4rem;}
+.join-box ul{padding-left:1.4rem;color:#b4b8d4;line-height:1.9;font-weight:300;}
+footer{padding:2rem 2rem;text-align:center;color:#888ca8;font-weight:300;font-size:0.9rem;border-top:1px solid rgba(157,123,255,0.1);margin-top:6rem;}
+@media(max-width:768px){
+    .nav-links{gap:1rem;}
+    .hero h1{font-size:2.8rem;}
+    .content-wrap{grid-template-columns:1fr;}
+    .section-title{font-size:1.6rem;}
+    .flow-node{width:min(86vw,264px);height:min(86vw,264px);padding:0 30px;}
+    .flow-node p{font-size:0.76rem;}
+}
+</style>
+</head>
+<body>
+<canvas id="starfield"></canvas>
+<div class="nebula"></div>
+<nav id="navbar">
+    <div class="nav-wrap">
+        <div class="logo">月球人基地</div>
+        <ul class="nav-links">
+            <li><button class="eye-btn" id="invertToggle" type="button" aria-label="切换反色" title="反色显示">
+                <svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 7 10 7a9.1 9.1 0 0 0 5.39-1.61"/><path d="M14.12 14.12A3 3 0 1 1 9.88 9.88"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+            </button></li>
+            <li><span class="nav-item active" data-page="home">首页</span></li>
+            <li><span class="nav-item" data-page="about">关于我们</span></li>
+            <li><span class="nav-item" data-page="project">项目领域</span></li>
+            <li><span class="nav-item" data-page="links">关联站点</span></li>
+            <li><span class="nav-item" data-page="join">加入我们</span></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- 首页 -->
+<div class="page active" id="home">
+    <section class="hero">
+        <div class="hero-inner">
+            <h1>月球人基地<br>编程工作室</h1>
+            <p>青少年开发者联盟，聚焦网页工程、独立游戏开发、算法与开源项目。在深空代码之中，构建属于少年创作者的数字空间。</p>
+            <div class="hero-btn" data-page="about">了解更多</div>
+        </div>
+    </section>
+</div>
+
+<!-- 关于我们 -->
+<div class="page" id="about">
+    <div class="container">
+        <h2 class="section-title">关于我们</h2>
+        <div class="flow">
+            <div class="flow-node" data-num="01">
+                <div class="node-label">2024 年初</div>
+                <h3>构想诞生</h3>
+                <p>仅有一人，前身名为光影工作室，计划搭建青少年编程工作室，团队尚未组建</p>
+            </div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node" data-num="02">
+                <div class="node-label">2024-07-02</div>
+                <h3>结识伙伴</h3>
+                <p>月球人基地正式成立，确定团队名称，开启协作</p>
+            </div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node" data-num="03">
+                <h3>团队方向确立</h3>
+                <p>成员分头研究 C++ 算法竞赛、Python 脚本、网页前端、Scratch 作品</p>
+            </div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node" data-num="04">
+                <h3>团队理念</h3>
+                <p>不设高入门门槛；优先在项目实践锻炼思维；不急于快速完成成品</p>
+            </div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node" data-num="05">
+                <h3>开源约定</h3>
+                <p>所有项目开源；支持独立开发、组队开发、跨团队合作，成果可共同署名</p>
+            </div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node" data-num="06">
+                <h3>团队准则</h3>
+                <p>拒绝长期摆烂；允许代码反复重构试错；看重持续探索意愿</p>
+            </div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node" data-num="07">
+                <div class="node-label">2025</div>
+                <h3>初代官网上线</h3>
+                <a class="node-link" href="https://maxmzh666.github.io/yueqiuren" target="_blank" rel="noopener">maxmzh666.github.io/yueqiuren</a>
+            </div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node" data-num="08">
+                <h3>官网建设</h3>
+                <p>搭建新版工作室网站，托管在 GitHub Pages，用于对外展示作品</p>
+            </div>
+        </div>
+        <footer>© 2026 月球人基地™</footer>
+    </div>
+</div>
+
+<!-- 项目领域 -->
+<div class="page" id="project">
+    <div class="container">
+        <h2 class="section-title">项目领域</h2>
+        <div class="project-grid">
+            <div class="card">
+                <h3>站点开发</h3>
+                <p>工作室官网、个人主页、子项目页面，静态站点架构，科幻极简UI。</p>
+            </div>
+            <div class="card">
+                <h3>独立游戏</h3>
+                <p>网页2D小游戏，玩法原型设计，逻辑编写，美术氛围搭建。</p>
+            </div>
+            <div class="card">
+                <h3>工具脚本</h3>
+                <p>自动化小工具、数据处理脚本，用于简化学习与项目流程。</p>
+            </div>
+            <div class="card">
+                <h3>算法竞赛</h3>
+                <p>C++算法练习，蓝桥训练，数学模型推导，竞赛题复盘。</p>
+            </div>
+        </div>
+        <footer>© 2026 月球人基地™</footer>
+    </div>
+</div>
+
+<!-- 关联站点 -->
+<div class="page" id="links">
+    <div class="container">
+        <h2 class="section-title">关联站点</h2>
+        <div class="sites-grid">
+            <a class="site-card" href="https://maxmzh666.github.io/" target="_blank" rel="noopener">
+                <h3>MAXMZH 总主页</h3>
+                <p>工作室主理人 MAXMZH 的个人主页，项目入口与作品总览。</p>
+                <div class="site-url">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    maxmzh666.github.io
+                </div>
+            </a>
+            <a class="site-card" href="https://maxmzh666.github.io/yueqiuren" target="_blank" rel="noopener">
+                <h3>初代月球人基地官网</h3>
+                <p>2025 年上线的初代工作室官网，月球人基地最早的线上阵地。</p>
+                <div class="site-url">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    maxmzh666.github.io/yueqiuren
+                </div>
+            </a>
+            <a class="site-card" href="https://maxmzh666.github.io/apex-xenith/index.html" target="_blank" rel="noopener">
+                <h3>MAX Apex Xenith</h3>
+                <div class="site-tag">子工作室站点</div>
+                <p>独筑星海，至臻永恒。</p>
+                <div class="site-url">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    maxmzh666.github.io/apex-xenith
+                </div>
+            </a>
+            <a class="site-card" href="https://maxmzh666.github.io/tactgame/index.html" target="_blank" rel="noopener">
+                <h3>审判行动：致命瞄准</h3>
+                <div class="site-tag">游戏官网</div>
+                <p>包含游戏介绍、更新日志、在线试玩与排行榜。</p>
+                <div class="site-url">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    maxmzh666.github.io/tactgame
+                </div>
+            </a>
+            <a class="site-card" href="https://maxmzh666.github.io/max-studio/index.html" target="_blank" rel="noopener">
+                <h3>MAX工作室</h3>
+                <p>MAX 旗下工作室站点。</p>
+                <div class="site-url">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    maxmzh666.github.io/max-studio
+                </div>
+            </a>
+            <a class="site-card" href="https://maxmzh666.github.io/community-home.html" target="_blank" rel="noopener">
+                <h3>MAX社区</h3>
+                <p>MAX 社区站点，成员的线上交流空间。</p>
+                <div class="site-url">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    maxmzh666.github.io/community-home.html
+                </div>
+            </a>
+            <a class="site-card" href="https://caellab.com" target="_blank" rel="noopener">
+                <h3>caellab.com</h3>
+                <p>伙伴网站，友情合作站点。</p>
+                <div class="site-url">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    caellab.com
+                </div>
+            </a>
+        </div>
+        <footer>© 2026 月球人基地™</footer>
+    </div>
+</div>
+
+<!-- 加入我们 -->
+<div class="page" id="join">
+    <div class="container">
+        <h2 class="section-title">加入我们</h2>
+        <div class="join-box">
+            <h3>招募标准</h3>
+            <ul>
+                <li>对编程抱有热情，愿意持续学习，不要求深厚基础</li>
+                <li>具备基本沟通能力，拒绝长期摆烂划水</li>
+                <li>至少感兴趣一个方向：网页、UI、电子音乐、游戏、任意编程语言（C++，python为主）、五大学科竞赛、短视频</li>
+                <li>遵守工作室公约，参与项目讨论，作品可共同署名</li>
+            </ul>
+        </div>
+        <footer>© 2026 月球人基地™</footer>
+    </div>
+</div>
+
+<script>
+// 等待DOM全部加载完成再执行JS
+document.addEventListener('DOMContentLoaded', function(){
+    const pageLinks = document.querySelectorAll('[data-page]');
+    const pages = document.querySelectorAll('.page');
+    const navItems = document.querySelectorAll('.nav-item');
+
+    function switchPage(pageId){
+        pages.forEach(p=>p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        navItems.forEach(nav=>{
+            nav.classList.toggle('active', nav.dataset.page === pageId);
+        })
+        window.scrollTo(0,0);
+    }
+    pageLinks.forEach(link=>{
+        link.onclick = function(){
+            const targetPage = this.dataset.page;
+            switchPage(targetPage);
+        }
+    })
+
+    // 小眼睛：整页反色切换
+    const invertToggle = document.getElementById('invertToggle');
+    invertToggle.addEventListener('click', ()=>{
+        document.documentElement.classList.toggle('inverted');
+    });
+
+    // 导航滚动效果
+    const nav = document.getElementById('navbar');
+    window.addEventListener('scroll',()=>{
+        if(window.scrollY > 80){nav.classList.add('scrolled');}else{nav.classList.remove('scrolled');}
+    });
+
+    // 星空粒子
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    let w,h,stars=[];
+    let mouseX=0,mouseY=0;
+    window.addEventListener('mousemove',(e)=>{mouseX = e.clientX;mouseY = e.clientY;});
+    function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;}
+    window.addEventListener('resize',resize);
+    resize();
+    class Star{
+        constructor(){this.x=Math.random()*w;this.y=Math.random()*h;this.r=Math.random()*0.8+0.15;this.baseSpeed=Math.random()*0.15+0.03;this.vx=0;this.vy=0;}
+        update(){
+            const dx = mouseX - this.x;
+            const dy = mouseY - this.y;
+            const dist = Math.sqrt(dx*dx+dy*dy);
+            if(dist < 160){const force = (160-dist)/160 * 0.08;this.vx -= dx * force * 0.001;this.vy -= dy * force * 0.001;}
+            this.vy += this.baseSpeed;this.x += this.vx;this.y += this.vy;this.vx *=0.96;
+            if(this.y>h){this.y=0;this.x=Math.random()*w;this.vx=0;this.vy=0;}
+            if(this.x<0)this.x=w;if(this.x>w)this.x=0;
+        }
+        draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle="rgba(255,255,255,0.75)";ctx.fill();}
+    }
+    for(let i=0;i<650;i++) stars.push(new Star());
+    function animate(){ctx.clearRect(0,0,w,h);stars.forEach(s=>{s.update();s.draw();});requestAnimationFrame(animate);}
+    animate();
+});
+</script>
+</body>
+</html>
